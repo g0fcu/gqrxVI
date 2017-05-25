@@ -36,6 +36,8 @@ public slots:
     void setSpeechOff(bool);
     void setSync(bool);
     void loadModeCombo();
+    void speakBW(QString);
+    QString getBW();
 private:
     Ui::MainWindow ui;
     QTcpSocket *socket;
