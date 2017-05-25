@@ -62,6 +62,15 @@ MainWindow::MainWindow(QWidget *parent)
     old_TenHz = newFreq.mid(newFreq.length() - 3, 1);
 
     loadModeCombo();
+    ui.CurrentMode->setText(ui.comboMode->currentText());
+
+    QString bw = getBW();
+    if(bw != "-1")
+    {
+        int v;
+        v = bw.toInt();
+        ui.bandwidth->setValue(v);
+    }
 
     connect(ui.Hambands, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated), this, &MainWindow::speakBand);
     connect(ui.comboMode, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated), this, &MainWindow::speakMode);
@@ -77,6 +86,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui.Speech_On, &QAction::triggered, this, &MainWindow::setSpeechOn);
     connect(ui.Speech_Off, &QAction::triggered, this, &MainWindow::setSpeechOff);
     connect(ui.actionSync, &QAction::triggered, this, &MainWindow::setSync);
+    connect(ui.bandwidth, static_cast<void(QSpinBox::*)(const QString &)>(&QSpinBox::valueChanged), this, &MainWindow::speakBW);
 }
 void MainWindow::loadModeCombo()
 {
@@ -94,6 +104,26 @@ void MainWindow::loadModeCombo()
       int usbIndex =  ui.comboMode->findText("USB");
       ui.comboMode->setCurrentIndex(usbIndex);
     }
+}
+QString MainWindow::getBW()
+{
+    QStringList list;
+    QString bw;
+    socket->write("m\n");
+    socket->waitForReadyRead(100);
+    char rc[100];
+    // check return code
+    socket->readLine(rc, sizeof(rc));
+    QString returnCode = QString::fromLocal8Bit(rc);
+
+    if(returnCode.left(4) != "RPRT")
+    {
+      socket->readLine(rc, sizeof(rc));
+      QString returnCode = QString::fromLocal8Bit(rc);
+      returnCode = returnCode.left(returnCode.length() - 1);
+      return returnCode;
+    }
+    return "-1";
 }
 void MainWindow::setSpeechOn(bool Value)
 {
@@ -122,7 +152,7 @@ void MainWindow::speakOneMHz(QString Value)
     int v;
     if(Value != old_OneMHz)
     {
-        if(old_OneMHz.left(old_OneMHz.length() - 10) == "9" and Value.left(Value.length() - 10) == "0")
+        if(old_OneMHz.left(old_OneMHz.length() - 4) == "9" and Value.left(Value.length() - 4) == "0")
         {
             if((ui.OneMHz->value() == 0) and
                (ui.ThousandMHz->value() +
@@ -139,7 +169,7 @@ void MainWindow::speakOneMHz(QString Value)
             setNextDigitTenMHz = true;
 
         }
-        if(old_OneMHz.left(old_OneMHz.length() - 10) == "0" and Value.left(Value.length() - 10) == "9")
+        if(old_OneMHz.left(old_OneMHz.length() - 4) == "0" and Value.left(Value.length() - 4) == "9")
         {
             if((ui.OneMHz->value() == 9) and
                (ui.ThousandMHz->value() +
@@ -216,7 +246,7 @@ void MainWindow::speakHundredMHz(QString Value)
     int v;
     if(Value != old_HundredMHz)
     {
-        if(old_HundredMHz.left(old_HundredMHz.length() - 18) == "9" and Value.left(Value.length() - 18) == "0")
+        if(old_HundredMHz.left(old_HundredMHz.length() - 12) == "9" and Value.left(Value.length() - 12) == "0")
         {
             if((ui.HundredMHz->value() == 0) and
                (ui.ThousandMHz->value() == 0))
@@ -231,7 +261,7 @@ void MainWindow::speakHundredMHz(QString Value)
             setNextDigitThousandMHz = true;
 
         }
-        if(old_HundredMHz.left(old_HundredMHz.length() - 18) == "0" and Value.left(Value.length() - 18) == "9")
+        if(old_HundredMHz.left(old_HundredMHz.length() - 12) == "0" and Value.left(Value.length() - 12) == "9")
         {
             if((ui.HundredMHz->value() == 9) and
                (ui.ThousandMHz->value() == 0))
@@ -282,7 +312,7 @@ void MainWindow::speakTenMHz(QString Value)
     int v;
     if(Value != old_TenMHz)
     {
-        if(old_TenMHz.left(old_TenMHz.length() - 14) == "9" and Value.left(Value.length() - 14) == "0")
+        if(old_TenMHz.left(old_TenMHz.length() - 8) == "9" and Value.left(Value.length() - 8) == "0")
         {
             if((ui.TenMHz->value() == 0) and
                (ui.ThousandMHz->value() +
@@ -298,7 +328,7 @@ void MainWindow::speakTenMHz(QString Value)
             setNextDigitHundredMHz = true;
 
         }
-        if(old_TenMHz.left(old_TenMHz.length() - 14) == "0" and Value.left(Value.length() - 14) == "9")
+        if(old_TenMHz.left(old_TenMHz.length() - 8) == "0" and Value.left(Value.length() - 8) == "9")
         {
             if((ui.TenMHz->value() == 9) and
                (ui.ThousandMHz->value() +
@@ -349,7 +379,7 @@ void MainWindow::speakHundredkHz(QString Value)
     int v;
     if(Value != old_HundredkHz)
     {
-        if(old_HundredkHz.left(old_HundredkHz.length() - 18) == "9" and Value.left(Value.length() - 18) == "0")
+        if(old_HundredkHz.left(old_HundredkHz.length() - 10) == "9" and Value.left(Value.length() - 10) == "0")
         {
             if((ui.HundredkHz->value() == 0) and
                (ui.ThousandMHz->value() +
@@ -367,7 +397,7 @@ void MainWindow::speakHundredkHz(QString Value)
             setNextDigitOneMHz = true;
 
         }
-        if(old_HundredkHz.left(old_HundredkHz.length() - 18) == "0" and Value.left(Value.length() - 18) == "9")
+        if(old_HundredkHz.left(old_HundredkHz.length() - 10) == "0" and Value.left(Value.length() - 10) == "9")
         {
             if((ui.HundredkHz->value() == 9) and
                (ui.ThousandMHz->value() +
@@ -419,7 +449,7 @@ void MainWindow::speakTenkHz(QString Value)
     int v;
     if(Value != old_TenkHz)
     {
-        if(old_TenkHz.left(old_TenkHz.length() - 14) == "9" and Value.left(Value.length() - 14) == "0")
+        if(old_TenkHz.left(old_TenkHz.length() - 6) == "9" and Value.left(Value.length() - 6) == "0")
         {
             if((ui.TenkHz->value() == 0) and
                (ui.ThousandMHz->value() +
@@ -438,7 +468,7 @@ void MainWindow::speakTenkHz(QString Value)
             setNextDigitHundredkHz = true;
 
         }
-        if(old_TenkHz.left(old_TenkHz.length() - 14) == "0" and Value.left(Value.length() - 14) == "9")
+        if(old_TenkHz.left(old_TenkHz.length() - 6) == "0" and Value.left(Value.length() - 6) == "9")
         {
             if((ui.TenkHz->value() == 9) and
                (ui.ThousandMHz->value() +
@@ -561,7 +591,7 @@ void MainWindow::speakHundredHz(QString Value)
     int v;
     if(Value != old_HundredHz)
     {
-        if(old_HundredHz.left(old_HundredHz.length() - 14) == "9" and Value.left(Value.length() - 14) == "0")
+        if(old_HundredHz.left(old_HundredHz.length() - 10) == "9" and Value.left(Value.length() - 10) == "0")
         {
             if((ui.HundredHz->value() == 0) and
                (ui.ThousandMHz->value() +
@@ -582,7 +612,7 @@ void MainWindow::speakHundredHz(QString Value)
             setNextDigitOnekHz = true;
 
         }
-        if(old_HundredHz.left(old_HundredHz.length() - 14) == "0" and Value.left(Value.length() - 14) == "9")
+        if(old_HundredHz.left(old_HundredHz.length() - 10) == "0" and Value.left(Value.length() - 10) == "9")
         {
             if((ui.HundredHz->value() == 9) and
                (ui.ThousandMHz->value() +
@@ -635,7 +665,7 @@ void MainWindow::speakTenHz(QString Value)
     int v;
     if(Value != old_TenHz)
     {
-        if(old_TenHz.left(old_TenHz.length() - 10) == "9" and Value.left(Value.length() - 10) == "0")
+        if(old_TenHz.left(old_TenHz.length() - 6) == "9" and Value.left(Value.length() - 6) == "0")
         {
             if((ui.TenHz->value() == 0) and
                (ui.ThousandMHz->value() +
@@ -657,7 +687,7 @@ void MainWindow::speakTenHz(QString Value)
             setNextDigitHundredHz = true;
 
         }
-        if(old_TenHz.left(old_TenHz.length() - 10) == "0" and Value.left(Value.length() - 10) == "9")
+        if(old_TenHz.left(old_TenHz.length() - 6) == "0" and Value.left(Value.length() - 6) == "9")
         {
             if((ui.TenHz->value() == 9) and
                (ui.ThousandMHz->value() +
@@ -704,6 +734,10 @@ void MainWindow::speakTenHz(QString Value)
     }
     old_TenHz = Value;
 }
+void MainWindow::speakBW(QString Value)
+{
+        writeToGqrx("M " + ui.comboMode->currentText() + " " + Value + "\n");
+}
 
 void MainWindow::speakMode(int Mode)
 {
@@ -713,6 +747,7 @@ void MainWindow::speakMode(int Mode)
     {
       //  m_speech->say(ui.comboMode->currentText());
     }
+   ui.CurrentMode->setText(ui.comboMode->currentText());
    switch(Mode)
    {
    case(0):
@@ -775,6 +810,13 @@ void MainWindow::speakMode(int Mode)
    case(19):
        writeToGqrx("M " + ui.comboMode->currentText() + "\n");
        break;
+   }
+   QString bw = getBW();
+   if(bw != "-1")
+   {
+       int v;
+       v = bw.toInt();
+       ui.bandwidth->setValue(v);
    }
    speak = old_speak;
 }
@@ -945,7 +987,7 @@ void MainWindow::writeToGqrx(QString msgToGqrx)
 
 QString MainWindow::readGqrx(QString msgToGqrx)
 {
-    qDebug() << "readGqrx";
+    //qDebug() << "readGqrx";
     QByteArray msg = msgToGqrx.toLocal8Bit();
     const char *c_str2 = msg.data();
     socket->write(c_str2, qstrlen(c_str2));
@@ -954,11 +996,22 @@ QString MainWindow::readGqrx(QString msgToGqrx)
     // check return code
     socket->readLine(rc, sizeof(rc));
     QString returnCode = QString::fromLocal8Bit(rc);
-     qDebug() << returnCode;
+     //qDebug() << returnCode;
     if(returnCode.left(4) != "RPRT")
     {
        //frequency returned
-        ui.freq->setText(returnCode);
+        //ui.freq->setText(returnCode);
+        ui.freq->setText(
+                    ui.ThousandMHz->text().left(ui.ThousandMHz->text().length()-4)+" "+
+                    ui.HundredMHz->text().left(1)+" "+
+                    ui.TenMHz->text().left(1)+" "+
+                    ui.OneMHz->text().left(1)+" "+
+                    ui.HundredkHz->text().left(1)+" "+
+                    ui.TenkHz->text().left(1)+" "+
+                    ui.OnekHz->text().left(1)+" "+
+                    ui.HundredHz->text().left(1)+" "+
+                    ui.TenHz->text().left(1)+" "
+                    );
         //setDigits(returnCode);
         //if msg starts with RPRT and is not RPRT 0 then error
         //else new frequency has been returned
@@ -978,7 +1031,7 @@ QString MainWindow::readGqrx(QString msgToGqrx)
 
 void MainWindow::readyRead()
 {
-    qDebug() << "Reading...";
+    //qDebug() << "Reading...";
     //qDebug() << socket->readAll();
     QByteArray msg = socket->readAll();
     QString string = QString(QLatin1String(msg));
@@ -1006,7 +1059,7 @@ void MainWindow::setDigits(QString returnCode)
     int lengthFreq = returnCode.length();
     QString t;
     int v;
-    qDebug() << returnCode;qDebug() << returnCode.length();
+    //qDebug() << returnCode;qDebug() << returnCode.length();
     switch(lengthFreq)
     {
     case 1:
@@ -1203,5 +1256,16 @@ void MainWindow::setDigits(QString returnCode)
         ui.ThousandMHz->setValue(v);
         break;
     }
+    ui.freq->setText(
+                ui.ThousandMHz->text().left(ui.ThousandMHz->text().length()-4)+" "+
+                ui.HundredMHz->text().left(1)+" "+
+                ui.TenMHz->text().left(1)+" "+
+                ui.OneMHz->text().left(1)+" "+
+                ui.HundredkHz->text().left(1)+" "+
+                ui.TenkHz->text().left(1)+" "+
+                ui.OnekHz->text().left(1)+" "+
+                ui.HundredHz->text().left(1)+" "+
+                ui.TenHz->text().left(1)+" "
+                );
 }
 
